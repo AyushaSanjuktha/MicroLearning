@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, CheckCircle, Wand2, XCircle } from "lucide-react";
+import { BookOpen, CheckCircle, Wand2, XCircle, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -79,7 +79,16 @@ export default function Home() {
   };
 
   const allQuestionsAnswered =
-    Object.keys(selectedAnswers).length === quizQuestions.length;
+    Object.keys(selectedAnswers).length === quizQuestions.length && quizQuestions.length > 0;
+
+  const getRecommendation = () => {
+    if (quizScore === null) return null;
+    const percentage = (quizScore / quizQuestions.length) * 100;
+    if (percentage < 50) {
+      return "Recommendation: Revise this topic using micro-lessons.";
+    }
+    return "Recommendation: Move to the next topic.";
+  };
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-8">
@@ -213,7 +222,7 @@ export default function Home() {
                       </div>
                     ))}
                   </CardContent>
-                  <CardFooter className="flex-col items-start gap-4">
+                  <CardFooter className="flex-col items-stretch gap-4">
                     {quizScore === null ? (
                       <Button
                         onClick={handleSubmitQuiz}
@@ -222,10 +231,14 @@ export default function Home() {
                         Submit Quiz
                       </Button>
                     ) : (
-                      <div className="w-full text-center p-4 bg-secondary rounded-lg">
+                      <div className="w-full text-center p-4 bg-secondary rounded-lg space-y-3">
                         <p className="text-lg font-bold text-secondary-foreground">
                           Your Score: {quizScore} / {quizQuestions.length}
                         </p>
+                        <div className="flex items-center justify-center gap-2 text-accent-foreground/80 bg-accent/80 p-3 rounded-md">
+                          <Lightbulb className="h-5 w-5" />
+                          <p className="font-semibold">{getRecommendation()}</p>
+                        </div>
                       </div>
                     )}
                   </CardFooter>
