@@ -17,41 +17,39 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { generateLessonAction } from "./actions";
 import MarkdownRenderer from "@/components/markdown-renderer";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const quizQuestions = [
-  {
-    id: "q1",
-    question: "What is an array?",
-    options: [
-      "A collection of key-value pairs",
-      "An ordered collection of elements",
-      "A single value",
-      "A function",
-    ],
-    correctAnswer: "An ordered collection of elements",
-  },
-  {
-    id: "q2",
-    question:
-      "How do you access the first element of an array named 'myArray'?",
-    options: ["myArray[1]", "myArray.first()", "myArray[0]", "myArray.get(0)"],
-    correctAnswer: "myArray[0]",
-  },
-];
+type QuizQuestion = {
+  id: string;
+  question: string;
+  options: string[];
+  correctAnswer: string;
+};
+
+const topics = ["Arrays", "Strings"];
 
 export default function Home() {
   const [lessonContent, setLessonContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: string]: string }>({});
   const [quizScore, setQuizScore] = useState<number | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState("Arrays");
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const { toast } = useToast();
 
   const handleGenerateLesson = async () => {
     setIsLoading(true);
     setLessonContent("");
+    setQuizQuestions([]);
     setSelectedAnswers({});
     setQuizScore(null);
-    const result = await generateLessonAction();
+    const result = await generateLessonAction(selectedTopic);
     setIsLoading(false);
 
     if (result.error) {
@@ -62,6 +60,7 @@ export default function Home() {
       });
     } else if (result.lessonContent) {
       setLessonContent(result.lessonContent);
+      setQuizQuestions(result.quizQuestions || []);
     }
   };
 
@@ -95,20 +94,32 @@ export default function Home() {
         </header>
 
         <section className="bg-card p-6 rounded-lg shadow-md mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-semibold text-card-foreground flex items-center gap-2 font-headline">
+          <div className="w-full sm:w-auto flex-grow">
+            <h2 className="text-2xl font-semibold text-card-foreground flex items-center gap-2 font-headline mb-2">
               <BookOpen className="text-primary" />
-              Topic: Arrays
+              Topic
             </h2>
-            <p className="text-muted-foreground mt-1">
-              Generate a bite-sized lesson on the fundamentals of arrays.
+            <Select onValueChange={setSelectedTopic} defaultValue={selectedTopic}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a topic" />
+              </SelectTrigger>
+              <SelectContent>
+                {topics.map((topic) => (
+                  <SelectItem key={topic} value={topic}>
+                    {topic}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-muted-foreground mt-2 text-sm">
+              Generate a bite-sized lesson on the selected topic.
             </p>
           </div>
           <Button
             onClick={handleGenerateLesson}
             disabled={isLoading}
             size="lg"
-            className="w-full sm:w-auto bg-accent hover:bg-accent/90"
+            className="w-full sm:w-auto bg-accent hover:bg-accent/90 mt-4 sm:mt-0"
           >
             <Wand2 className="mr-2 h-5 w-5" />
             {isLoading ? "Generating..." : "Generate Micro Lesson (AI)"}
@@ -135,7 +146,7 @@ export default function Home() {
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-2xl text-primary font-headline">
-                    Your Micro-Lesson on Arrays
+                    Your Micro-Lesson on {selectedTopic}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -143,81 +154,83 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-primary font-headline">
-                    Quick Quiz
-                  </CardTitle>
-                  <CardDescription>
-                    Test your knowledge on arrays.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {quizQuestions.map((q, index) => (
-                    <div key={q.id}>
-                      <p className="font-medium text-card-foreground mb-3">
-                        {index + 1}. {q.question}
-                      </p>
-                      <RadioGroup
-                        value={selectedAnswers[q.id]}
-                        onValueChange={(value) => handleAnswerChange(q.id, value)}
-                        disabled={quizScore !== null}
-                      >
-                        {q.options.map((option) => {
-                          const isCorrect = option === q.correctAnswer;
-                          const isSelected = selectedAnswers[q.id] === option;
-                          const showResult = quizScore !== null;
+              {quizQuestions.length > 0 && (
+                <Card className="shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-2xl text-primary font-headline">
+                      Quick Quiz
+                    </CardTitle>
+                    <CardDescription>
+                      Test your knowledge on {selectedTopic}.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {quizQuestions.map((q, index) => (
+                      <div key={q.id}>
+                        <p className="font-medium text-card-foreground mb-3">
+                          {index + 1}. {q.question}
+                        </p>
+                        <RadioGroup
+                          value={selectedAnswers[q.id]}
+                          onValueChange={(value) => handleAnswerChange(q.id, value)}
+                          disabled={quizScore !== null}
+                        >
+                          {q.options.map((option) => {
+                            const isCorrect = option === q.correctAnswer;
+                            const isSelected = selectedAnswers[q.id] === option;
+                            const showResult = quizScore !== null;
 
-                          return (
-                            <div
-                              key={option}
-                              className={`flex items-center space-x-3 p-2 rounded-md ${
-                                showResult && isCorrect
-                                  ? "bg-green-100 dark:bg-green-900/30"
-                                  : ""
-                              } ${
-                                showResult && isSelected && !isCorrect
-                                  ? "bg-red-100 dark:bg-red-900/30"
-                                  : ""
-                              }`}
-                            >
-                              <RadioGroupItem value={option} id={`${q.id}-${option}`} />
-                              <Label
-                                htmlFor={`${q.id}-${option}`}
-                                className="flex-1 cursor-pointer"
+                            return (
+                              <div
+                                key={option}
+                                className={`flex items-center space-x-3 p-2 rounded-md ${
+                                  showResult && isCorrect
+                                    ? "bg-green-100 dark:bg-green-900/30"
+                                    : ""
+                                } ${
+                                  showResult && isSelected && !isCorrect
+                                    ? "bg-red-100 dark:bg-red-900/30"
+                                    : ""
+                                }`}
                               >
-                                {option}
-                              </Label>
-                              {showResult && isCorrect && (
-                                <CheckCircle className="h-5 w-5 text-green-600" />
-                              )}
-                              {showResult && isSelected && !isCorrect && (
-                                <XCircle className="h-5 w-5 text-red-600" />
-                              )}
-                            </div>
-                          );
-                        })}
-                      </RadioGroup>
-                    </div>
-                  ))}
-                </CardContent>
-                <CardFooter className="flex-col items-start gap-4">
-                  {quizScore === null ? (
-                    <Button
-                      onClick={handleSubmitQuiz}
-                      disabled={!allQuestionsAnswered}
-                    >
-                      Submit Quiz
-                    </Button>
-                  ) : (
-                    <div className="w-full text-center p-4 bg-secondary rounded-lg">
-                      <p className="text-lg font-bold text-secondary-foreground">
-                        Your Score: {quizScore} / {quizQuestions.length}
-                      </p>
-                    </div>
-                  )}
-                </CardFooter>
-              </Card>
+                                <RadioGroupItem value={option} id={`${q.id}-${option}`} />
+                                <Label
+                                  htmlFor={`${q.id}-${option}`}
+                                  className="flex-1 cursor-pointer"
+                                >
+                                  {option}
+                                </Label>
+                                {showResult && isCorrect && (
+                                  <CheckCircle className="h-5 w-5 text-green-600" />
+                                )}
+                                {showResult && isSelected && !isCorrect && (
+                                  <XCircle className="h-5 w-5 text-red-600" />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </RadioGroup>
+                      </div>
+                    ))}
+                  </CardContent>
+                  <CardFooter className="flex-col items-start gap-4">
+                    {quizScore === null ? (
+                      <Button
+                        onClick={handleSubmitQuiz}
+                        disabled={!allQuestionsAnswered}
+                      >
+                        Submit Quiz
+                      </Button>
+                    ) : (
+                      <div className="w-full text-center p-4 bg-secondary rounded-lg">
+                        <p className="text-lg font-bold text-secondary-foreground">
+                          Your Score: {quizScore} / {quizQuestions.length}
+                        </p>
+                      </div>
+                    )}
+                  </CardFooter>
+                </Card>
+              )}
             </div>
           )}
         </section>
