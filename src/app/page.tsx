@@ -1,22 +1,56 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, Wand2 } from "lucide-react";
+import { BookOpen, CheckCircle, Wand2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { generateLessonAction } from "./actions";
 import MarkdownRenderer from "@/components/markdown-renderer";
 
+const quizQuestions = [
+  {
+    id: "q1",
+    question: "What is an array?",
+    options: [
+      "A collection of key-value pairs",
+      "An ordered collection of elements",
+      "A single value",
+      "A function",
+    ],
+    correctAnswer: "An ordered collection of elements",
+  },
+  {
+    id: "q2",
+    question:
+      "How do you access the first element of an array named 'myArray'?",
+    options: ["myArray[1]", "myArray.first()", "myArray[0]", "myArray.get(0)"],
+    correctAnswer: "myArray[0]",
+  },
+];
+
 export default function Home() {
   const [lessonContent, setLessonContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedAnswers, setSelectedAnswers] = useState<{ [key: string]: string }>({});
+  const [quizScore, setQuizScore] = useState<number | null>(null);
   const { toast } = useToast();
 
   const handleGenerateLesson = async () => {
     setIsLoading(true);
     setLessonContent("");
+    setSelectedAnswers({});
+    setQuizScore(null);
     const result = await generateLessonAction();
     setIsLoading(false);
 
@@ -30,6 +64,23 @@ export default function Home() {
       setLessonContent(result.lessonContent);
     }
   };
+
+  const handleAnswerChange = (questionId: string, value: string) => {
+    setSelectedAnswers((prev) => ({ ...prev, [questionId]: value }));
+  };
+
+  const handleSubmitQuiz = () => {
+    let score = 0;
+    quizQuestions.forEach((q) => {
+      if (selectedAnswers[q.id] === q.correctAnswer) {
+        score++;
+      }
+    });
+    setQuizScore(score);
+  };
+
+  const allQuestionsAnswered =
+    Object.keys(selectedAnswers).length === quizQuestions.length;
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-8">
@@ -80,7 +131,7 @@ export default function Home() {
           )}
 
           {lessonContent && (
-            <div className="animate-in fade-in-50 duration-500">
+            <div className="animate-in fade-in-50 duration-500 space-y-8">
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-2xl text-primary font-headline">
@@ -90,6 +141,82 @@ export default function Home() {
                 <CardContent>
                   <MarkdownRenderer content={lessonContent} />
                 </CardContent>
+              </Card>
+
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-2xl text-primary font-headline">
+                    Quick Quiz
+                  </CardTitle>
+                  <CardDescription>
+                    Test your knowledge on arrays.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {quizQuestions.map((q, index) => (
+                    <div key={q.id}>
+                      <p className="font-medium text-card-foreground mb-3">
+                        {index + 1}. {q.question}
+                      </p>
+                      <RadioGroup
+                        value={selectedAnswers[q.id]}
+                        onValueChange={(value) => handleAnswerChange(q.id, value)}
+                        disabled={quizScore !== null}
+                      >
+                        {q.options.map((option) => {
+                          const isCorrect = option === q.correctAnswer;
+                          const isSelected = selectedAnswers[q.id] === option;
+                          const showResult = quizScore !== null;
+
+                          return (
+                            <div
+                              key={option}
+                              className={`flex items-center space-x-3 p-2 rounded-md ${
+                                showResult && isCorrect
+                                  ? "bg-green-100 dark:bg-green-900/30"
+                                  : ""
+                              } ${
+                                showResult && isSelected && !isCorrect
+                                  ? "bg-red-100 dark:bg-red-900/30"
+                                  : ""
+                              }`}
+                            >
+                              <RadioGroupItem value={option} id={`${q.id}-${option}`} />
+                              <Label
+                                htmlFor={`${q.id}-${option}`}
+                                className="flex-1 cursor-pointer"
+                              >
+                                {option}
+                              </Label>
+                              {showResult && isCorrect && (
+                                <CheckCircle className="h-5 w-5 text-green-600" />
+                              )}
+                              {showResult && isSelected && !isCorrect && (
+                                <XCircle className="h-5 w-5 text-red-600" />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </RadioGroup>
+                    </div>
+                  ))}
+                </CardContent>
+                <CardFooter className="flex-col items-start gap-4">
+                  {quizScore === null ? (
+                    <Button
+                      onClick={handleSubmitQuiz}
+                      disabled={!allQuestionsAnswered}
+                    >
+                      Submit Quiz
+                    </Button>
+                  ) : (
+                    <div className="w-full text-center p-4 bg-secondary rounded-lg">
+                      <p className="text-lg font-bold text-secondary-foreground">
+                        Your Score: {quizScore} / {quizQuestions.length}
+                      </p>
+                    </div>
+                  )}
+                </CardFooter>
               </Card>
             </div>
           )}
