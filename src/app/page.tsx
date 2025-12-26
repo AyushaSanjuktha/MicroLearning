@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, CheckCircle, Wand2, XCircle, Lightbulb } from "lucide-react";
+import { BookOpen, CheckCircle, Wand2, XCircle, Lightbulb, BrainCircuit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,7 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { generateLessonAction } from "./actions";
+import { generateLessonAction, getQuizFeedbackAction } from "./actions";
 import MarkdownRenderer from "@/components/markdown-renderer";
 import {
   Select,
@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 type QuizQuestion = {
   id: string;
@@ -37,10 +38,13 @@ const topics = ["Arrays", "Strings"];
 export default function Home() {
   const [lessonContent, setLessonContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSimpleExplanation, setIsSimpleExplanation] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: string]: string }>({});
   const [quizScore, setQuizScore] = useState<number | null>(null);
   const [selectedTopic, setSelectedTopic] = useState("Arrays");
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [feedback, setFeedback] = useState("");
+  const [isFeedbackLoading, setIsFeedbackLoading] = useState(false);
   const { toast } = useToast();
 
   const handleGenerateLesson = async () => {
@@ -49,7 +53,8 @@ export default function Home() {
     setQuizQuestions([]);
     setSelectedAnswers({});
     setQuizScore(null);
-    const result = await generateLessonAction(selectedTopic);
+    setFeedback("");
+    const result = await generateLessonAction(selectedTopic, isSimpleExplanation);
     setIsLoading(false);
 
     if (result.error) {
@@ -68,14 +73,30 @@ export default function Home() {
     setSelectedAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
-  const handleSubmitQuiz = () => {
+  const handleSubmitQuiz = async () => {
     let score = 0;
+    const incorrectAnswers: { question: string; selectedAnswer: string; correctAnswer: string }[] = [];
     quizQuestions.forEach((q) => {
       if (selectedAnswers[q.id] === q.correctAnswer) {
         score++;
+      } else {
+        incorrectAnswers.push({
+          question: q.question,
+          selectedAnswer: selectedAnswers[q.id],
+          correctAnswer: q.correctAnswer,
+        });
       }
     });
     setQuizScore(score);
+
+    if (incorrectAnswers.length > 0) {
+      setIsFeedbackLoading(true);
+      const result = await getQuizFeedbackAction({ topic: selectedTopic, incorrectAnswers });
+      if (result.feedback) {
+        setFeedback(result.feedback);
+      }
+      setIsFeedbackLoading(false);
+    }
   };
 
   const allQuestionsAnswered =
@@ -102,37 +123,40 @@ export default function Home() {
           </p>
         </header>
 
-        <section className="bg-card p-6 rounded-lg shadow-md mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="w-full sm:w-auto flex-grow">
-            <h2 className="text-2xl font-semibold text-card-foreground flex items-center gap-2 font-headline mb-2">
-              <BookOpen className="text-primary" />
-              Topic
-            </h2>
-            <Select onValueChange={setSelectedTopic} defaultValue={selectedTopic}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a topic" />
-              </SelectTrigger>
-              <SelectContent>
-                {topics.map((topic) => (
-                  <SelectItem key={topic} value={topic}>
-                    {topic}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-muted-foreground mt-2 text-sm">
-              Generate a bite-sized lesson on the selected topic.
-            </p>
+        <section className="bg-card p-6 rounded-lg shadow-md mb-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="w-full sm:w-auto flex-grow">
+              <h2 className="text-2xl font-semibold text-card-foreground flex items-center gap-2 font-headline mb-2">
+                <BookOpen className="text-primary" />
+                Topic
+              </h2>
+              <Select onValueChange={setSelectedTopic} defaultValue={selectedTopic}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a topic" />
+                </SelectTrigger>
+                <SelectContent>
+                  {topics.map((topic) => (
+                    <SelectItem key={topic} value={topic}>
+                      {topic}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              onClick={handleGenerateLesson}
+              disabled={isLoading}
+              size="lg"
+              className="w-full sm:w-auto bg-accent hover:bg-accent/90 mt-4 sm:mt-0"
+            >
+              <Wand2 className="mr-2 h-5 w-5" />
+              {isLoading ? "Generating..." : "Generate Micro Lesson (AI)"}
+            </Button>
           </div>
-          <Button
-            onClick={handleGenerateLesson}
-            disabled={isLoading}
-            size="lg"
-            className="w-full sm:w-auto bg-accent hover:bg-accent/90 mt-4 sm:mt-0"
-          >
-            <Wand2 className="mr-2 h-5 w-5" />
-            {isLoading ? "Generating..." : "Generate Micro Lesson (AI)"}
-          </Button>
+          <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-border">
+            <Switch id="simple-explanation" checked={isSimpleExplanation} onCheckedChange={setIsSimpleExplanation} />
+            <Label htmlFor="simple-explanation" className="text-muted-foreground">Explain in a Simple Way</Label>
+          </div>
         </section>
 
         <section>
@@ -239,6 +263,20 @@ export default function Home() {
                           <Lightbulb className="h-5 w-5" />
                           <p className="font-semibold">{getRecommendation()}</p>
                         </div>
+
+                        {(isFeedbackLoading || feedback) && (
+                          <div className="mt-4 text-left p-4 bg-card rounded-lg">
+                            <h3 className="font-semibold text-card-foreground flex items-center gap-2"><BrainCircuit className="h-5 w-5 text-primary" /> AI Feedback</h3>
+                            {isFeedbackLoading ? (
+                               <div className="space-y-2 mt-2">
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-3/4" />
+                              </div>
+                            ) : (
+                              <p className="text-muted-foreground mt-2 text-sm">{feedback}</p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardFooter>
