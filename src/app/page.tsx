@@ -1,7 +1,8 @@
+
 "use client";
 
-import { useState } from "react";
-import { BookOpen, CheckCircle, Wand2, XCircle, Lightbulb, BrainCircuit } from "lucide-react";
+import { useState, useEffect } from "react";
+import { BookOpen, CheckCircle, Wand2, XCircle, Lightbulb, BrainCircuit, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,6 +26,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { useUser } from "@/firebase";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { doc, setDoc } from "firebase/firestore";
+import { useFirestore } from "@/firebase";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 type QuizQuestion = {
   id: string;
@@ -46,6 +53,15 @@ export default function Home() {
   const [feedback, setFeedback] = useState("");
   const [isFeedbackLoading, setIsFeedbackLoading] = useState(false);
   const { toast } = useToast();
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+  const firestore = useFirestore();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isUserLoading, router]);
 
   const handleGenerateLesson = async () => {
     setIsLoading(true);
@@ -74,6 +90,7 @@ export default function Home() {
   };
 
   const handleSubmitQuiz = async () => {
+    if (!user) return;
     let score = 0;
     const incorrectAnswers: { question: string; selectedAnswer: string; correctAnswer: string }[] = [];
     quizQuestions.forEach((q) => {
@@ -88,6 +105,28 @@ export default function Home() {
       }
     });
     setQuizScore(score);
+
+    // Save quiz score to firestore
+    const scoreRef = doc(firestore, `users/${user.uid}/quizScores/${Date.now()}`);
+    setDocumentNonBlocking(scoreRef, {
+      id: scoreRef.id,
+      userId: user.uid,
+      quizId: selectedTopic, // using topic as quizId for simplicity
+      score: score,
+      completionDate: new Date().toISOString(),
+    }, { merge: true });
+
+    // Update learning progress
+    const progressRef = doc(firestore, `users/${user.uid}/learningProgress/${selectedTopic}`);
+    const completed = score / quizQuestions.length >= 0.5;
+    setDocumentNonBlocking(progressRef, {
+      id: selectedTopic,
+      userId: user.uid,
+      topicId: selectedTopic,
+      completed: completed,
+      timeSpent: 5, // Assuming 5 minutes per lesson
+    }, { merge: true });
+
 
     if (incorrectAnswers.length > 0) {
       setIsFeedbackLoading(true);
@@ -111,16 +150,29 @@ export default function Home() {
     return "Recommendation: Move to the next topic.";
   };
 
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 sm:p-8">
+        <Skeleton className="h-10 w-48" />
+      </div>
+    );
+  }
+
   return (
     <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-8">
       <div className="w-full max-w-3xl">
-        <header className="text-center mb-8">
+        <header className="text-center mb-8 flex justify-between items-center">
           <h1 className="text-4xl md:text-5xl font-bold text-primary mb-2 font-headline">
             MicroLearnAI
           </h1>
           <p className="text-lg text-muted-foreground">
             Your personal AI-powered learning companion.
           </p>
+          <Link href="/dashboard" passHref>
+            <Button variant="ghost">
+              <User className="mr-2" /> Dashboard
+            </Button>
+          </Link>
         </header>
 
         <section className="bg-card p-6 rounded-lg shadow-md mb-8">
