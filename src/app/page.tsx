@@ -29,7 +29,7 @@ import { Switch } from "@/components/ui/switch";
 import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { doc, setDoc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -139,7 +139,7 @@ export default function Home() {
   };
 
   const allQuestionsAnswered =
-    Object.keys(selectedAnswers).length === quizQuestions.length && quizQuestions.length > 0;
+    quizQuestions.length > 0 && Object.keys(selectedAnswers).length === quizQuestions.length;
 
   const getRecommendation = () => {
     if (quizScore === null) return null;
@@ -250,53 +250,55 @@ export default function Home() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {quizQuestions.map((q, index) => (
-                      <div key={q.id}>
-                        <p className="font-medium text-card-foreground mb-3">
-                          {index + 1}. {q.question}
-                        </p>
-                        <RadioGroup
-                          value={selectedAnswers[q.id]}
-                          onValueChange={(value) => handleAnswerChange(q.id, value)}
-                          disabled={quizScore !== null}
-                        >
-                          {q.options.map((option) => {
-                            const isCorrect = option === q.correctAnswer;
-                            const isSelected = selectedAnswers[q.id] === option;
-                            const showResult = quizScore !== null;
+                    {quizQuestions.map((q, index) => {
+                      const showResult = quizScore !== null;
+                      return (
+                        <div key={q.id}>
+                          <p className="font-medium text-card-foreground mb-3">
+                            {index + 1}. {q.question}
+                          </p>
+                          <RadioGroup
+                            value={selectedAnswers[q.id]}
+                            onValueChange={(value) => handleAnswerChange(q.id, value)}
+                            disabled={showResult}
+                          >
+                            {q.options.map((option) => {
+                              const isCorrect = option === q.correctAnswer;
+                              const isSelected = selectedAnswers[q.id] === option;
 
-                            return (
-                              <div
-                                key={option}
-                                className={`flex items-center space-x-3 p-2 rounded-md ${
-                                  showResult && isCorrect
-                                    ? "bg-green-100 dark:bg-green-900/30"
-                                    : ""
-                                } ${
-                                  showResult && isSelected && !isCorrect
-                                    ? "bg-red-100 dark:bg-red-900/30"
-                                    : ""
-                                }`}
-                              >
-                                <RadioGroupItem value={option} id={`${q.id}-${option}`} />
-                                <Label
-                                  htmlFor={`${q.id}-${option}`}
-                                  className="flex-1 cursor-pointer"
+                              return (
+                                <div
+                                  key={option}
+                                  className={`flex items-center space-x-3 p-2 rounded-md ${
+                                    showResult && isCorrect
+                                      ? "bg-green-100 dark:bg-green-900/30"
+                                      : ""
+                                  } ${
+                                    showResult && isSelected && !isCorrect
+                                      ? "bg-red-100 dark:bg-red-900/30"
+                                      : ""
+                                  }`}
                                 >
-                                  {option}
-                                </Label>
-                                {showResult && isCorrect && (
-                                  <CheckCircle className="h-5 w-5 text-green-600" />
-                                )}
-                                {showResult && isSelected && !isCorrect && (
-                                  <XCircle className="h-5 w-5 text-red-600" />
-                                )}
-                              </div>
-                            );
-                          })}
-                        </RadioGroup>
-                      </div>
-                    ))}
+                                  <RadioGroupItem value={option} id={`${q.id}-${option}`} />
+                                  <Label
+                                    htmlFor={`${q.id}-${option}`}
+                                    className="flex-1 cursor-pointer"
+                                  >
+                                    {option}
+                                  </Label>
+                                  {showResult && isCorrect && (
+                                    <CheckCircle className="h-5 w-5 text-green-600" />
+                                  )}
+                                  {showResult && isSelected && !isCorrect && (
+                                    <XCircle className="h-5 w-5 text-red-600" />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </RadioGroup>
+                        </div>
+                      );
+                    })}
                   </CardContent>
                   <CardFooter className="flex-col items-stretch gap-4">
                     {quizScore === null ? (
