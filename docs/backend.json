@@ -1,0 +1,419 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the MicroLearnAI platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "The user's username."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "profileName": {
+          "type": "string",
+          "description": "The user's profile name."
+        },
+        "registrationDate": {
+          "type": "string",
+          "description": "The date and time when the user registered.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email",
+        "profileName",
+        "registrationDate"
+      ]
+    },
+    "LearningTopic": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LearningTopic",
+      "type": "object",
+      "description": "Represents a topic available for learning.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the learning topic."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the learning topic (e.g., 'Arrays')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the learning topic."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description"
+      ]
+    },
+    "MicroLesson": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MicroLesson",
+      "type": "object",
+      "description": "Represents a micro-lesson generated for a specific topic.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the micro-lesson."
+        },
+        "topicId": {
+          "type": "string",
+          "description": "Reference to LearningTopic. (Relationship: LearningTopic 1:N MicroLesson)"
+        },
+        "content": {
+          "type": "string",
+          "description": "The content of the micro-lesson (AI-generated)."
+        },
+        "generationDate": {
+          "type": "string",
+          "description": "The date and time when the micro-lesson was generated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "topicId",
+        "content",
+        "generationDate"
+      ]
+    },
+    "Quiz": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Quiz",
+      "type": "object",
+      "description": "Represents a quiz for a learning topic.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the quiz."
+        },
+        "topicId": {
+          "type": "string",
+          "description": "Reference to LearningTopic. (Relationship: LearningTopic 1:N Quiz)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the quiz."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the quiz."
+        }
+      },
+      "required": [
+        "id",
+        "topicId",
+        "title",
+        "description"
+      ]
+    },
+    "UserQuizScore": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserQuizScore",
+      "type": "object",
+      "description": "Represents a user's score on a specific quiz.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user quiz score."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N UserQuizScore)"
+        },
+        "quizId": {
+          "type": "string",
+          "description": "Reference to Quiz. (Relationship: Quiz 1:N UserQuizScore)"
+        },
+        "score": {
+          "type": "number",
+          "description": "The user's score on the quiz."
+        },
+        "completionDate": {
+          "type": "string",
+          "description": "The date and time when the user completed the quiz.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "quizId",
+        "score",
+        "completionDate"
+      ]
+    },
+    "UserLearningProgress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserLearningProgress",
+      "type": "object",
+      "description": "Represents a user's progress on a specific learning topic.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user learning progress."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N UserLearningProgress)"
+        },
+        "topicId": {
+          "type": "string",
+          "description": "Reference to LearningTopic. (Relationship: LearningTopic 1:N UserLearningProgress)"
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Indicates whether the user has completed the topic."
+        },
+        "timeSpent": {
+          "type": "number",
+          "description": "The amount of time (in minutes) the user has spent on the topic."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "topicId",
+        "completed",
+        "timeSpent"
+      ]
+    },
+    "AchievementBadge": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AchievementBadge",
+      "type": "object",
+      "description": "Represents a badge a user can earn.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the achievement badge."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the badge."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the badge."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the badge image.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "imageUrl"
+      ]
+    },
+    "UserAchievement": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserAchievement",
+      "type": "object",
+      "description": "Represents a user's earned achievement badge.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user achievement."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N UserAchievement)"
+        },
+        "badgeId": {
+          "type": "string",
+          "description": "Reference to AchievementBadge. (Relationship: AchievementBadge 1:N UserAchievement)"
+        },
+        "earnedDate": {
+          "type": "string",
+          "description": "The date and time when the user earned the badge.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "badgeId",
+        "earnedDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information.  Owned by the user. All User-owned data is located under this node for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/learningProgress/{progressId}",
+        "definition": {
+          "entityName": "UserLearningProgress",
+          "schema": {
+            "$ref": "#/backend/entities/UserLearningProgress"
+          },
+          "description": "Stores the learning progress of a user for a specific topic. Owned by the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "progressId",
+              "description": "The unique identifier of the learning progress entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/quizScores/{scoreId}",
+        "definition": {
+          "entityName": "UserQuizScore",
+          "schema": {
+            "$ref": "#/backend/entities/UserQuizScore"
+          },
+          "description": "Stores the quiz scores of a user for specific quizzes. Owned by the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "scoreId",
+              "description": "The unique identifier of the user quiz score entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/achievements/{achievementId}",
+        "definition": {
+          "entityName": "UserAchievement",
+          "schema": {
+            "$ref": "#/backend/entities/UserAchievement"
+          },
+          "description": "Stores the achievements earned by a user. Owned by the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "achievementId",
+              "description": "The unique identifier of the user achievement entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/learningTopics/{topicId}",
+        "definition": {
+          "entityName": "LearningTopic",
+          "schema": {
+            "$ref": "#/backend/entities/LearningTopic"
+          },
+          "description": "Stores information about available learning topics.",
+          "params": [
+            {
+              "name": "topicId",
+              "description": "The unique identifier of the learning topic."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/learningTopics/{topicId}/microLessons/{lessonId}",
+        "definition": {
+          "entityName": "MicroLesson",
+          "schema": {
+            "$ref": "#/backend/entities/MicroLesson"
+          },
+          "description": "Stores micro-lessons for each learning topic.",
+          "params": [
+            {
+              "name": "topicId",
+              "description": "The unique identifier of the learning topic."
+            },
+            {
+              "name": "lessonId",
+              "description": "The unique identifier of the micro-lesson."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/learningTopics/{topicId}/quizzes/{quizId}",
+        "definition": {
+          "entityName": "Quiz",
+          "schema": {
+            "$ref": "#/backend/entities/Quiz"
+          },
+          "description": "Stores quizzes for each learning topic.",
+          "params": [
+            {
+              "name": "topicId",
+              "description": "The unique identifier of the learning topic."
+            },
+            {
+              "name": "quizId",
+              "description": "The unique identifier of the quiz."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/achievementBadges/{badgeId}",
+        "definition": {
+          "entityName": "AchievementBadge",
+          "schema": {
+            "$ref": "#/backend/entities/AchievementBadge"
+          },
+          "description": "Stores information about available achievement badges.",
+          "params": [
+            {
+              "name": "badgeId",
+              "description": "The unique identifier of the achievement badge."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support a personalized micro-learning platform. It emphasizes authorization independence and efficient data retrieval for user dashboards.  User data and related information (progress, scores, achievements) are stored under the `/users/{userId}` path to enforce ownership. Learning content (topics, lessons, quizzes) is stored in separate collections to facilitate easier management and querying. Authorization independence is achieved by storing all data relevant to a user directly under their user ID path, eliminating the need for `get()` calls to parent documents for authorization checks. This structure enables atomic operations and simplifies security rules. The structure also supports QAPs by using path-based ownership for private data and dedicated collections for learning content, which prevents rules from acting as filters during list operations. No custom claims are needed as roles are not used in this design."
+  }
+}
