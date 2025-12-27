@@ -44,18 +44,34 @@ const prompt = ai.definePrompt({
   name: 'generateMicroLessonPrompt',
   input: {schema: GenerateMicroLessonInputSchema},
   output: {schema: GenerateMicroLessonOutputSchema},
-  prompt: `You are an expert educator specializing in concise, engaging micro-lessons.
-  Generate a short, informative lesson about the topic: {{{topic}}}. Focus on the core concepts and provide a few practical examples.
-  Keep the lesson brief and easy to understand.
-  The lesson should be in markdown format.
+  prompt: `You are an expert educational designer specializing in micro-learning. Your goal is to convert complex topics into a 3-minute lesson for students.
 
-  {{#if isSimpleExplanation}}
-  Explain the topic in a very simple way, assuming the user is a complete beginner. Use analogies to make it easier to understand.
-  {{/if}}
+Strict Formatting Rules:
 
-  After the lesson, create 2 multiple-choice quiz questions to test the user's understanding of the {{{topic}}}.
-  For each question, provide 4 options and indicate the correct answer.
-  Return the lesson and the quiz questions in the specified output format.`,
+Markdown Only: Use # for the title, ### for section headers, and ** for key terms.
+
+Vertical Spacing: Add exactly two newlines (\\n\\n) between every paragraph and header to prevent text clumping.
+
+Indentation: Use bullet points (* ) or numbered lists for core concepts to ensure proper indentation.
+
+Micro-Structure: 
+> * Start with a 'Why this matters' hook.
+> * Use one clear analogy.
+> * End with a 'Check your understanding' summary.
+
+Visual Clues: Use blockquotes (>) for important definitions.
+
+Output Format: Return the lesson as a clean Markdown string. Do not include introductory filler text like 'Here is your lesson'.
+
+Generate a 3-minute micro-lesson about the topic: {{{topic}}}.
+
+{{#if isSimpleExplanation}}
+Explain the topic in a very simple way, assuming the user is a complete beginner. Use a clear, relatable analogy to make it easier to understand.
+{{/if}}
+
+After the lesson content, create 2 multiple-choice quiz questions to test the user's understanding of the {{{topic}}}.
+For each question, provide 4 options and indicate the correct answer.
+Return the lesson and the quiz questions in the specified output format.`,
 });
 
 const generateMicroLessonFlow = ai.defineFlow(
